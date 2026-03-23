@@ -1,0 +1,38 @@
+[Unit]
+Description=TBAPS Packet Capture Service (Traffic Monitor)
+Documentation=https://github.com/yourorg/tbaps
+After=network.target postgresql.service openvpn.service
+Wants=postgresql.service
+# Requires OpenVPN tun0 interface to be up before capturing
+After=sys-subsystem-net-devices-tun0.device
+
+[Service]
+Type=simple
+# Root required for raw socket / packet capture (CAP_NET_RAW)
+User=root
+Group=root
+WorkingDirectory=/opt/tbaps/vpn/traffic-monitor
+EnvironmentFile=/opt/tbaps/.env
+
+ExecStart=/opt/tbaps/traffic-venv/bin/python packet_capture.py
+ExecStop=/bin/kill -s SIGTERM $MAINPID
+
+KillMode=process
+KillSignal=SIGTERM
+TimeoutStopSec=15
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+# Minimal capabilities — only what's needed for packet capture
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tbaps-capture
+
+[Install]
+WantedBy=multi-user.target

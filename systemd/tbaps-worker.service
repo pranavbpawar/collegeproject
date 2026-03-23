@@ -1,0 +1,48 @@
+[Unit]
+Description=TBAPS Celery Worker
+Documentation=https://github.com/yourorg/tbaps
+After=network.target postgresql.service redis.service rabbitmq-server.service
+Wants=postgresql.service redis.service rabbitmq-server.service
+
+[Service]
+# Type=simple: celery runs in foreground, systemd manages the process directly
+# (Type=forking with --detach is unreliable with systemd)
+Type=simple
+User=tbaps
+Group=tbaps
+WorkingDirectory=/opt/tbaps/backend
+EnvironmentFile=/opt/tbaps/.env
+
+ExecStart=/opt/tbaps/venv/bin/celery \
+    --app app.core.celery_app.celery_app \
+    worker \
+    --loglevel=info \
+    --concurrency=4 \
+    --max-tasks-per-child=1000 \
+    --queues=default,trust_calculation,traffic_analysis \
+    --hostname=tbaps-worker@%%h
+
+ExecStop=/bin/kill -s TERM $MAINPID
+
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=60
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+# Logging — goes to journald (view with: journalctl -u tbaps-worker -f)
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tbaps-worker
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/tbaps /var/log/tbaps /var/run/tbaps
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

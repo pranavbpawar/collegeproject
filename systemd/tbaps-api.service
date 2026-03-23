@@ -1,0 +1,38 @@
+[Unit]
+Description=TBAPS Backend API (Gunicorn + Uvicorn workers)
+Documentation=https://github.com/yourorg/tbaps
+After=network.target postgresql.service redis.service rabbitmq-server.service
+Wants=postgresql.service redis.service rabbitmq-server.service
+
+[Service]
+Type=notify
+NotifyAccess=all
+User=tbaps
+Group=tbaps
+WorkingDirectory=/opt/tbaps/backend
+EnvironmentFile=/opt/tbaps/.env
+ExecStart=/opt/tbaps/venv/bin/gunicorn app.main:app \
+    --config /opt/tbaps/backend/gunicorn.conf.py
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tbaps-api
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/tbaps /var/log/tbaps
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: tbaps-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        sync: false   # Set manually in Render dashboard (Neon connection string)
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        sync: false   # Set manually — must be exactly 32 chars
+      - key: REDIS_URL
+        sync: false   # Set if using Render Redis or Upstash
+      - key: REDIS_OPTIONAL
+        value: "true"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: LOG_FORMAT
+        value: json
+      - key: CORS_ORIGINS
+        sync: false   # Set to your Vercel frontend URL(s)
+      - key: FRONTEND_URL
+        sync: false   # Your Vercel app URL
+      - key: SERVER_URL
+        sync: false   # This Render service URL (for agent package generator)
+      - key: PROMETHEUS_ENABLED
+        value: "false"
+    plan: free
+
+  # Optional: Celery worker (comment out if not using background tasks)
+  # - type: worker
+  #   name: tbaps-worker
+  #   runtime: python
+  #   rootDir: backend
+  #   buildCommand: pip install -r requirements.txt
+  #   startCommand: celery -A app.core.celery_app worker --loglevel=info
+  #   envVars:
+  #     - fromGroup: tbaps-env

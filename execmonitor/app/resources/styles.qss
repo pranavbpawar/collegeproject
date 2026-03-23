@@ -1,0 +1,206 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   ExecMonitor – Dark Mode Stylesheet (Catppuccin Mocha palette)
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+QWidget {
+    background-color: #1e1e2e;
+    color: #cdd6f4;
+    font-family: "Inter", "Segoe UI", "Ubuntu", sans-serif;
+    font-size: 13px;
+}
+
+QMainWindow {
+    background-color: #181825;
+}
+
+/* ── Labels ──────────────────────────────────────────────────────────────── */
+QLabel {
+    color: #cdd6f4;
+    padding: 2px;
+}
+
+QLabel#sectionTitle {
+    color: #89b4fa;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 6px 0 4px 0;
+}
+
+QLabel#statLabel {
+    color: #a6adc8;
+    font-size: 12px;
+}
+
+QLabel#statValue {
+    color: #cdd6f4;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+QLabel#statusRunning {
+    color: #a6e3a1;
+    font-weight: bold;
+}
+
+QLabel#statusStopped {
+    color: #f38ba8;
+    font-weight: bold;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+QPushButton {
+    background-color: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    border-radius: 6px;
+    padding: 7px 18px;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: #45475a;
+    border-color: #89b4fa;
+}
+
+QPushButton:pressed {
+    background-color: #585b70;
+}
+
+QPushButton:disabled {
+    background-color: #1e1e2e;
+    color: #585b70;
+    border-color: #313244;
+}
+
+QPushButton#btnStart {
+    background-color: #40a02b;
+    border-color: #40a02b;
+    color: #ffffff;
+}
+
+QPushButton#btnStart:hover {
+    background-color: #4ead32;
+}
+
+QPushButton#btnStart:disabled {
+    background-color: #1e1e2e;
+    color: #585b70;
+    border-color: #313244;
+}
+
+QPushButton#btnStop {
+    background-color: #d20f39;
+    border-color: #d20f39;
+    color: #ffffff;
+}
+
+QPushButton#btnStop:hover {
+    background-color: #e8173f;
+}
+
+QPushButton#btnStop:disabled {
+    background-color: #1e1e2e;
+    color: #585b70;
+    border-color: #313244;
+}
+
+/* ── Line Edit ───────────────────────────────────────────────────────────── */
+QLineEdit {
+    background-color: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    border-radius: 6px;
+    padding: 6px 10px;
+    selection-background-color: #89b4fa;
+    selection-color: #1e1e2e;
+}
+
+QLineEdit:focus {
+    border-color: #89b4fa;
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+QTableWidget {
+    background-color: #181825;
+    gridline-color: #313244;
+    border: 1px solid #313244;
+    border-radius: 6px;
+    alternate-background-color: #1e1e2e;
+}
+
+QTableWidget::item {
+    padding: 4px 8px;
+}
+
+QTableWidget::item:selected {
+    background-color: #45475a;
+    color: #cdd6f4;
+}
+
+QHeaderView::section {
+    background-color: #313244;
+    color: #89b4fa;
+    border: none;
+    border-bottom: 1px solid #45475a;
+    padding: 6px 8px;
+    font-weight: bold;
+}
+
+/* ── Scroll Bars ─────────────────────────────────────────────────────────── */
+QScrollBar:vertical {
+    background-color: #181825;
+    width: 10px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #45475a;
+    border-radius: 5px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #585b70;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }
+
+/* ── Group Box ───────────────────────────────────────────────────────────── */
+QGroupBox {
+    border: 1px solid #313244;
+    border-radius: 8px;
+    margin-top: 14px;
+    padding-top: 10px;
+    font-weight: bold;
+    color: #89b4fa;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 12px;
+    padding: 0 4px;
+    color: #89b4fa;
+}
+
+/* ── Status Bar ──────────────────────────────────────────────────────────── */
+QStatusBar {
+    background-color: #181825;
+    color: #a6adc8;
+    font-size: 12px;
+}
+
+/* ── Splitter ─────────────────────────────────────────────────────────────  */
+QSplitter::handle {
+    background-color: #313244;
+}
+
+/* ── Tooltip ─────────────────────────────────────────────────────────────── */
+QToolTip {
+    background-color: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    border-radius: 4px;
+    padding: 4px;
+}

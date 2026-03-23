@@ -1,0 +1,79 @@
+# =============================================================================
+# TBAPS — .gitignore
+# =============================================================================
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pywz
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.env/
+.Python
+
+# ── Environment files (NEVER commit secrets) ──────────────────────────────────
+.env
+# .env.example is OK to commit if creating a template for new devs
+
+# ── Node.js / Frontend ────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Database ──────────────────────────────────────────────────────────────────
+*.sqlite3
+*.db
+*.sql.gz
+
+# ── NEF Agent local data ──────────────────────────────────────────────────────
+agent/.nef/
+*.nef/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ── Alembic (keep alembic/, but not compiled output) ─────────────────────────
+backend/alembic/__pycache__/
+
+# ── Secrets / Certificates ────────────────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.p12
+certs/
+
+# ── Build artifacts ───────────────────────────────────────────────────────────
+*.deb
+*.exe
+*.msi
+*.zip
+
+# ── Exports ───────────────────────────────────────────────────────────────────
+backend/exports/

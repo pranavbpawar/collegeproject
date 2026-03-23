@@ -1,0 +1,52 @@
+/**
+ * CircleChart Component Styles
+ */
+
+.circle-chart-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: var(--spacing-md) auto;
+}
+
+.circle-chart {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-base);
+    position: relative;
+}
+
+.circle-chart::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(0, 136, 255, 0.2), transparent);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity var(--transition-base);
+}
+
+.circle-chart:hover::before {
+    opacity: 1;
+}
+
+.circle-inner {
+    width: 85%;
+    height: 85%;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.circle-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-gray-900);
+}

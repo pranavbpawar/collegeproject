@@ -1,0 +1,16 @@
+# Traffic Monitor Requirements
+
+# Core dependencies
+asyncio
+asyncpg>=0.29.0
+aiohttp>=3.9.0
+
+# Packet capture
+scapy>=2.5.0
+pyshark>=0.6
+
+# Database
+sqlalchemy>=2.0.0
+
+# Utilities
+python-dotenv>=1.0.0

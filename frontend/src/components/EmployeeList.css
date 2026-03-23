@@ -1,0 +1,164 @@
+/**
+ * EmployeeList Component Styles
+ */
+
+.employee-list {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.employee-list.empty {
+    padding: var(--spacing-2xl);
+    text-align: center;
+    color: var(--color-gray-500);
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    border-bottom: 2px solid var(--color-gray-100);
+}
+
+.list-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-gray-900);
+}
+
+.employee-count {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+    background: var(--color-gray-100);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-full);
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.employee-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.employee-table thead {
+    background: var(--color-gray-50);
+    border-bottom: 2px solid var(--color-gray-200);
+}
+
+.employee-table th {
+    padding: var(--spacing-md);
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.employee-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: all var(--transition-fast);
+}
+
+.employee-table th.sortable:hover {
+    background: var(--color-gray-100);
+    color: var(--color-primary);
+}
+
+.employee-table tbody tr {
+    border-bottom: 1px solid var(--color-gray-100);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.employee-table tbody tr:hover {
+    background: var(--color-gray-50);
+}
+
+.employee-table tbody tr.selected {
+    background: rgba(0, 136, 255, 0.05);
+    border-left: 4px solid var(--color-primary);
+}
+
+.employee-table td {
+    padding: var(--spacing-md);
+    font-size: 0.9rem;
+}
+
+.employee-name {
+    font-weight: 500;
+}
+
+.name-cell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.name-cell .name {
+    font-weight: 600;
+    color: var(--color-gray-900);
+}
+
+.name-cell .email {
+    font-size: 0.8rem;
+    color: var(--color-gray-500);
+}
+
+.trend-cell {
+    min-width: 120px;
+}
+
+.no-data {
+    color: var(--color-gray-400);
+    font-style: italic;
+    font-size: 0.875rem;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-at-risk {
+    background: rgba(255, 68, 68, 0.1);
+    color: var(--color-danger);
+}
+
+.status-good {
+    background: rgba(255, 170, 0, 0.1);
+    color: var(--color-warning);
+}
+
+.status-excellent {
+    background: rgba(68, 170, 68, 0.1);
+    color: var(--color-success);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .employee-table {
+        font-size: 0.85rem;
+    }
+
+    .employee-table th,
+    .employee-table td {
+        padding: var(--spacing-sm);
+    }
+
+    .name-cell .email {
+        display: none;
+    }
+}

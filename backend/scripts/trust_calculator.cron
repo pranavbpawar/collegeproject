@@ -1,0 +1,27 @@
+# TBAPS Trust Score Calculator - Cron Schedule
+# 
+# Calculates daily trust scores for all employees
+# Runs at 6 AM daily to ensure fresh scores for the day
+#
+# Installation:
+#   sudo cp trust_calculator.cron /etc/cron.d/tbaps-trust-calculator
+#   sudo chmod 644 /etc/cron.d/tbaps-trust-calculator
+#   sudo systemctl restart cron
+#
+# Logs:
+#   /var/log/tbaps/trust_calculator.log
+#   /var/log/tbaps/trust_calculator_cron.log
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+PYTHONPATH=/home/kali/Desktop/MACHINE/backend
+
+# Daily trust score calculation at 6:00 AM
+0 6 * * * root cd /home/kali/Desktop/MACHINE/backend && /usr/bin/python3 scripts/trust_calculator_cli.py calculate-all >> /var/log/tbaps/trust_calculator_cron.log 2>&1
+
+# Weekly full recalculation on Sunday at 7:00 AM (with 30-day window)
+0 7 * * 0 root cd /home/kali/Desktop/MACHINE/backend && /usr/bin/python3 scripts/trust_calculator_cli.py calculate-all --window-days 30 >> /var/log/tbaps/trust_calculator_cron.log 2>&1
+
+# Hourly check for new employees (lightweight)
+# This ensures new employees get their first score quickly
+0 * * * * root cd /home/kali/Desktop/MACHINE/backend && /usr/bin/python3 -c "from app.services.trust_calculator import TrustCalculator; import asyncio; asyncio.run(TrustCalculator().calculate_daily_scores())" >> /var/log/tbaps/trust_calculator_cron.log 2>&1

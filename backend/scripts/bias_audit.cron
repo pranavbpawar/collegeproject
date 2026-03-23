@@ -1,0 +1,21 @@
+# TBAPS Bias Detection Cron Jobs
+# Automated bias audits to ensure fairness across all demographic groups
+#
+# Installation:
+#   sudo cp bias_audit.cron /etc/cron.d/tbaps-bias-audit
+#   sudo chmod 644 /etc/cron.d/tbaps-bias-audit
+#   sudo systemctl restart cron
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+PYTHON=/usr/bin/python3
+TBAPS_DIR=/home/kali/Desktop/MACHINE/backend
+
+# Monthly full bias audit (1st of every month at 2 AM)
+0 2 1 * * root cd $TBAPS_DIR && $PYTHON scripts/bias_audit_cli.py run-audit >> /var/log/tbaps/bias_audit.log 2>&1
+
+# Weekly gender bias check (every Monday at 3 AM)
+0 3 * * 1 root cd $TBAPS_DIR && $PYTHON scripts/bias_audit_cli.py detect-gender >> /var/log/tbaps/bias_audit_weekly.log 2>&1
+
+# Quarterly comprehensive audit with mitigation (1st of Jan, Apr, Jul, Oct at 1 AM)
+0 1 1 1,4,7,10 * root cd $TBAPS_DIR && $PYTHON scripts/bias_audit_cli.py run-audit && $PYTHON scripts/bias_audit_cli.py mitigate >> /var/log/tbaps/bias_audit_quarterly.log 2>&1

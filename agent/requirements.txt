@@ -1,0 +1,30 @@
+# NEF Agent — Python dependencies
+# Install: pip install -r requirements.txt
+
+# ── Core HTTP & networking ────────────────────────────────────────────────────
+requests>=2.31.0          # HTTP client (sync, production)
+httpx>=0.27.0             # Async HTTP (future pipeline expansion)
+
+# ── System monitoring ─────────────────────────────────────────────────────────
+psutil>=5.9.0             # Process list, system info
+
+# ── Collectors ────────────────────────────────────────────────────────────────
+Pillow>=10.0.0            # Screenshot capture + tray icon rendering
+watchdog>=3.0.0           # File system event watching
+pynput>=1.7.7             # Keyboard/mouse rate tracking (privacy-safe, no content)
+
+# ── DNS packet capture (optional — needs CAP_NET_RAW / admin on Linux) ────────
+scapy>=2.5.0              # Real-time DNS sniffing (dns_capture_method=packet)
+
+# ── Transparency ──────────────────────────────────────────────────────────────
+pystray>=0.19.5           # System tray icon
+
+# ── Security / crypto ─────────────────────────────────────────────────────────
+cryptography>=42.0.0      # Certificate handling, key signing
+
+# ── Windows service (Windows only) ───────────────────────────────────────────
+pywin32>=306; sys_platform=="win32"   # Windows Service API + registry
+
+# ── Development / testing only (not needed in production) ─────────────────────
+# pytest>=8.0
+# pytest-mock>=3.0

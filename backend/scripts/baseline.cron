@@ -1,0 +1,24 @@
+# TBAPS Baseline Establishment Cron Jobs
+# 
+# Installation:
+#   sudo cp /home/kali/Desktop/MACHINE/backend/scripts/baseline.cron /etc/cron.d/tbaps-baseline
+#   sudo chmod 0644 /etc/cron.d/tbaps-baseline
+#   sudo systemctl restart cron
+#
+# Logs: /var/log/tbaps/baseline.log
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+PYTHONPATH=/srv/tbaps/backend
+
+# Daily baseline establishment at 3 AM
+# Runs for all employees with sufficient data
+0 3 * * * tbaps cd /srv/tbaps/backend && /usr/bin/python3 scripts/baseline_cli.py establish-all --days 30 >> /var/log/tbaps/baseline-cron.log 2>&1
+
+# Weekly full refresh on Sunday at 4 AM
+# Recalculates all baselines from scratch
+0 4 * * 0 tbaps cd /srv/tbaps/backend && /usr/bin/python3 scripts/baseline_cli.py establish-all --days 30 >> /var/log/tbaps/baseline-weekly.log 2>&1
+
+# New employee check every 6 hours
+# For employees with <30 days of data, check more frequently
+0 */6 * * * tbaps cd /srv/tbaps/backend && /usr/bin/python3 scripts/baseline_cli.py establish-all --days 30 --min-days 7 >> /var/log/tbaps/baseline-new-employees.log 2>&1
