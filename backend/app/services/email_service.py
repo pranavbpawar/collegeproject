@@ -460,43 +460,53 @@ def _build_kbt_onboarding_email(
     to_name: str,
     download_url: str,
     activation_code: str = "",
+    install_url_linux: str = "",
+    install_url_windows: str = "",
+    portal_url: str = "",
 ) -> tuple[str, str, str]:
     """
     Build (subject, plain_text, html) for the KBT Executable onboarding email.
     Formal tone as specified by TBAPS onboarding requirements.
+    Includes one-command install section when install_url_linux / install_url_windows are provided.
     """
     subject = "Welcome to TBAPS \u2013 Secure Access Setup"
 
     _code_display = activation_code if activation_code else "[Contact your administrator]"
+    _has_one_cmd  = bool(install_url_linux or install_url_windows)
+    _has_portal   = bool(portal_url)
 
     text_body = f"""Dear {to_name},
 
-We are pleased to inform you that your access to the TBAPS (Pragyantri) system has been successfully configured.
+We are pleased to inform you that your access to the TBAPS (Pragyantri) system has been
+successfully configured.
 
-To begin your work, please follow the steps below:
+{'──────────────────────────────────────────────────────────────────' if _has_one_cmd else ''}
+{'🚀 ONE-COMMAND INSTALL (Recommended)' if _has_one_cmd else ''}
+{'──────────────────────────────────────────────────────────────────' if _has_one_cmd else ''}
+{f'Linux / macOS:' if install_url_linux else ''}
+{f'  curl -s "{install_url_linux}" | bash' if install_url_linux else ''}
+{f'' if _has_one_cmd else ''}
+{f'Windows (PowerShell):' if install_url_windows else ''}
+{f'  iwr -useb "{install_url_windows}" | iex' if install_url_windows else ''}
 
-──────────────────────────────────────────────────
+This will automatically download, install, and launch the KBT Agent for you.
 
-Step 1: Download the KBT Executable
-  {download_url}
-
-Step 2: Run the Application
-  • Windows: Double-click the executable or run via PowerShell
-  • Linux:   Execute the file via terminal:  chmod +x KBT && ./KBT
-
-Step 3: Enter Your Activation Code (First Time Only)
-  • When prompted, enter the following code:
+ACTIVATION CODE (required on first launch):
 
   ╭──────────────────────────────╮
   │   ACTIVATION CODE: {_code_display}          │
   ╰──────────────────────────────╯
 
-  • This code is required only on first launch
-  • Future runs will start automatically
+{'🌐 YOUR WEB PORTAL: ' + portal_url if _has_portal else ''}
+{'(Log in to see your hours, chat with your manager, and view your KBT status)' if _has_portal else ''}
 
-Step 4: Start Work
-  • The application will begin tracking your session automatically
-  • You can monitor your working hours directly within the app
+──────────────────────────────────────────────────
+MANUAL DOWNLOAD (Fallback)
+
+  {download_url}
+
+  • Windows: Double-click the executable
+  • Linux:   chmod +x KBT && ./KBT
 
 ──────────────────────────────────────────────────
 
@@ -518,12 +528,55 @@ Best regards,
 TBAPS Administration Team
 """
 
+    # ── One-Command Install Section (new — shown when install URLs are provided) ──
+    _one_cmd_section = ""
+    if _has_one_cmd:
+        linux_cmd  = f'curl -s "{install_url_linux}" | bash'  if install_url_linux  else ""
+        win_cmd    = f'iwr -useb "{install_url_windows}" | iex' if install_url_windows else ""
+        _one_cmd_section = f"""
+          <!-- One-Command Install -->
+          <tr>
+            <td style="padding:0 40px 24px;">
+              <div style="background:linear-gradient(135deg,#052e16,#14532d);border:2px solid #16a34a;
+                          border-radius:14px;padding:24px 28px;">
+                <p style="color:#4ade80;font-size:11px;font-weight:700;letter-spacing:2px;
+                           text-transform:uppercase;margin:0 0 4px;">&#x1F680; Step 1 &mdash; One-Command Install</p>
+                <p style="color:#86efac;font-size:12px;margin:0 0 16px;line-height:1.5;">
+                  Run <strong>one command</strong> below to automatically install and start KBT:
+                </p>
+                {f'<p style="color:#4ade80;font-size:11px;font-weight:600;margin:0 0 4px;">&#x1F427; Linux / macOS</p><code style="display:block;background:#0a1a0a;color:#86efac;padding:12px 16px;border-radius:8px;font-size:12px;word-break:break-all;margin-bottom:12px;">{linux_cmd}</code>' if linux_cmd else ''}
+                {f'<p style="color:#4ade80;font-size:11px;font-weight:600;margin:0 0 4px;">&#x1FA9F; Windows (PowerShell)</p><code style="display:block;background:#0a1a0a;color:#86efac;padding:12px 16px;border-radius:8px;font-size:12px;word-break:break-all;margin-bottom:0;">{win_cmd}</code>' if win_cmd else ''}
+              </div>
+            </td>
+          </tr>"""
+
+    # ── Web Portal Link (new) ──────────────────────────────────────────────────
+    _portal_section = ""
+    if _has_portal:
+        _portal_section = f"""
+          <!-- Web Portal -->
+          <tr>
+            <td style="padding:0 40px 24px;">
+              <div style="background:#0c1445;border:1px solid #3730a3;border-radius:12px;padding:18px 24px;
+                          display:flex;align-items:center;gap:16px;">
+                <div style="font-size:28px;">&#x1F310;</div>
+                <div style="flex:1;">
+                  <p style="color:#a5b4fc;font-size:12px;font-weight:700;margin:0 0 4px;">Your Web Portal</p>
+                  <a href="{portal_url}" style="color:#818cf8;font-size:12px;word-break:break-all;">{portal_url}</a>
+                  <p style="color:#6366f1;font-size:11px;margin:4px 0 0;">
+                    View your hours, chat with your manager, and check KBT status &mdash; from any browser.
+                  </p>
+                </div>
+              </div>
+            </td>
+          </tr>"""
+
     html_body = f"""<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to TBAPS \u2013 Secure Access Setup</title>
+  <title>Welcome to TBAPS &ndash; Secure Access Setup</title>
 </head>
 <body style="margin:0;padding:0;background:#0f1117;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1117;padding:32px 0;">
@@ -556,12 +609,16 @@ TBAPS Administration Team
             </td>
           </tr>
 
-          <!-- Download button -->
+          {_one_cmd_section}
+
+          {_portal_section}
+
+          <!-- Download button (fallback or primary) -->
           <tr>
             <td style="padding:0 40px 24px;">
               <p style="color:#cbd5e1;font-size:13px;font-weight:600;
                          text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">
-                Step 1 &mdash; Download Your KBT Executable
+                {'&#x1F4E5; Manual Download (Fallback)' if _has_one_cmd else 'Step 1 &mdash; Download Your KBT Executable'}
               </p>
               <div style="text-align:center;">
                 <a href="{download_url}"
@@ -728,20 +785,30 @@ async def send_kbt_onboarding_email(
     employee_id: str,
     download_url: str,
     activation_code: str = "",
+    install_url_linux: str = "",
+    install_url_windows: str = "",
+    portal_url: str = "",
 ) -> None:
     """
     Compose and send the formal KBT Executable onboarding email.
 
     Args:
-        to_email:      Recipient email address.
-        to_name:       Recipient display name.
-        employee_id:   Employee UUID (used for logging).
-        download_url:  Signed download URL for the KBT identity bundle.
+        to_email:             Recipient email address.
+        to_name:              Recipient display name.
+        employee_id:          Employee UUID (used for logging).
+        download_url:         Signed download URL for the KBT identity bundle.
+        activation_code:      One-time activation code.
+        install_url_linux:    One-command install URL for bash (optional).
+        install_url_windows:  One-command install URL for PowerShell (optional).
+        portal_url:           Employee web portal URL (optional).
     """
     subject, text_body, html_body = _build_kbt_onboarding_email(
         to_name=to_name,
         download_url=download_url,
         activation_code=activation_code,
+        install_url_linux=install_url_linux,
+        install_url_windows=install_url_windows,
+        portal_url=portal_url,
     )
 
     logger.info(

@@ -100,7 +100,7 @@ class Settings(BaseSettings):
     CELERY_MAX_RETRIES: int = Field(default=3)
 
     # Monitoring
-    PROMETHEUS_ENABLED: bool = Field(default=True)
+    PROMETHEUS_ENABLED: bool = Field(default=False)
     SENTRY_DSN: str = Field(default="")
 
     # Logging
@@ -137,8 +137,21 @@ class Settings(BaseSettings):
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, v):
-        """Parse CORS origins from comma-separated string or list."""
+        """Parse CORS origins from comma-separated string, JSON array string, or list."""
+        import json
+        if isinstance(v, list):
+            return v
         if isinstance(v, str):
+            v = v.strip()
+            # Handle JSON array format: ["http://...", "http://..."]
+            if v.startswith("["):
+                try:
+                    parsed = json.loads(v)
+                    if isinstance(parsed, list):
+                        return [o.strip() for o in parsed if o.strip()]
+                except (json.JSONDecodeError, ValueError):
+                    pass
+            # Fallback: comma-separated format
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 

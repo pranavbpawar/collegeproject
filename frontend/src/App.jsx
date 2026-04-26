@@ -1,6 +1,7 @@
 /**
  * TBAPS — Main Application
  * Role-aware routing: dispatches to Admin, Manager, or HR dashboard based on JWT role.
+ * Employee portal is served at /employee/* without AuthProvider (separate auth flow).
  * Wrapped with AuthProvider so all child components can use useAuth().
  */
 
@@ -11,6 +12,14 @@ import AdminAgents from './pages/AdminAgents';
 import ManagerDashboard from './pages/ManagerDashboard';
 import HRDashboard from './pages/HRDashboard';
 import PeopleManagement from './pages/PeopleManagement';
+
+// Employee portal pages
+import EmployeeLogin         from './pages/employee/EmployeeLogin';
+import EmployeeDashboard     from './pages/employee/EmployeeDashboard';
+import EmployeeActivity      from './pages/employee/EmployeeActivity';
+import EmployeeChat          from './pages/employee/EmployeeChat';
+import EmployeeDeviceStatus  from './pages/employee/EmployeeDeviceStatus';
+
 
 // Existing Admin components
 import {
@@ -239,7 +248,26 @@ function AppInner() {
     return <RoleRouter />;
 }
 
+// ── Path-based router — separates employee portal from admin auth ──────────────
+
+function EmployeeRouter() {
+    const path = window.location.pathname;
+    if (path === '/employee/dashboard') return <EmployeeDashboard />;
+    if (path === '/employee/activity')  return <EmployeeActivity />;
+    if (path === '/employee/chat')      return <EmployeeChat />;
+    if (path === '/employee/device')    return <EmployeeDeviceStatus />;
+    return <EmployeeLogin />;   // /employee or /employee/* fallback
+}
+
 export default function App() {
+    const path = window.location.pathname;
+
+    // Employee portal — completely separate auth, no AuthProvider needed
+    if (path.startsWith('/employee')) {
+        return <EmployeeRouter />;
+    }
+
+    // Admin / Manager / HR portal — existing auth flow
     return (
         <AuthProvider>
             <AppInner />

@@ -132,9 +132,10 @@ async def request_id_middleware(request: Request, call_next):
 # ── API routes ─────────────────────────────────────────────────────────────────
 app.include_router(api_router, prefix="/api/v1")
 
-# Prometheus metrics (bind to internal port separately in production)
-metrics_app = make_asgi_app()
-app.mount("/metrics", metrics_app)
+# Prometheus metrics — only enabled when explicitly opted in (disabled by default in production)
+if settings.PROMETHEUS_ENABLED:
+    metrics_app = make_asgi_app()
+    app.mount("/metrics", metrics_app)
 
 
 # ── Exception handlers ─────────────────────────────────────────────────────────

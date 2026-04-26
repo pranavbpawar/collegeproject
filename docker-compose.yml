@@ -1,46 +1,57 @@
 # ==============================================================================
-# TBAPS — Local Development Docker Compose
-# Provides PostgreSQL + Redis for local backend development.
-# The FastAPI backend and React frontend run NATIVELY (not in Docker).
+# TBAPS — Full-Stack Docker Compose (Production-style local deployment)
+#
+# Runs ALL services in Docker:
+#   api         - FastAPI backend (port 8000)
+#   frontend    - React dashboard + nginx proxy (port 80)
+#   postgres    - PostgreSQL database (port 5432)
+#   redis       - Redis cache / session store (port 6379)
 #
 # Usage:
-#   docker compose up -d          → Start DB + Redis in background
-#   docker compose down            → Stop services
-#   docker compose down -v         → Stop + wipe volumes (fresh start)
+#   docker compose up --build -d     → Build images and start all services
+#   docker compose ps                → Check service health
+#   docker compose logs -f api       → Stream API logs
+#   docker compose down              → Stop services
+#   docker compose down -v           → Stop + wipe volumes (fresh DB)
 #
-# After starting, run:
-#   cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-#   cd frontend && npm run dev
+# Access:
+#   Dashboard   → http://localhost
+#   API         → http://localhost:8000
+#   API Docs    → http://localhost:8000/api/docs
+#   Health      → http://localhost/health
 # ==============================================================================
 
-version: "3.9"
+
 
 services:
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
   postgres:
     image: postgres:15-alpine
     container_name: tbaps_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ztuser
-      POSTGRES_PASSWORD: ztpass123
-      POSTGRES_DB: zerotrust
+      POSTGRES_USER: ${POSTGRES_USER:-ztuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ztpass123}
+      POSTGRES_DB: ${POSTGRES_DB:-zerotrust}
     ports:
-      - "5432:5432"    # Exposed to host — backend connects via localhost:5432
+      - "5433:5432"    # Use 5433 on host to avoid conflict with native postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ztuser -d zerotrust"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ztuser} -d ${POSTGRES_DB:-zerotrust}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # ── Redis ────────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: tbaps_redis
     restart: unless-stopped
     command: redis-server --save 60 1 --loglevel warning
     ports:
-      - "6379:6379"    # Exposed to host — backend connects via localhost:6379
+      - "6380:6379"    # Use 6380 on host to avoid conflict with native redis
     volumes:
       - redis_data:/data
     healthcheck:
@@ -49,19 +60,62 @@ services:
       timeout: 3s
       retries: 5
 
-  # Optional: pgAdmin for DB inspection (visit http://localhost:5050)
-  # Uncomment if needed
-  # pgadmin:
-  #   image: dpage/pgadmin4:latest
-  #   container_name: tbaps_pgadmin
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: admin@tbaps.local
-  #     PGADMIN_DEFAULT_PASSWORD: admin
-  #   ports:
-  #     - "5050:80"
-  #   depends_on:
-  #     - postgres
+  # ── FastAPI Backend ──────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: tbaps_api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Override DATABASE_URL to use Docker service name instead of localhost
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ztuser}:${POSTGRES_PASSWORD:-ztpass123}@postgres:5432/${POSTGRES_DB:-zerotrust}
+      # Override Redis URL to use Docker service name
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    ports:
+      - "8001:8000"   # Use 8001 on host; 8000 is taken by native uvicorn process
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - storage_data:/storage/chat_files
+      - exports_data:/app/exports
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+
+  # ── React Dashboard (built by Vite, served by Nginx) ─────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+      args:
+        # API is accessed via nginx proxy in the same container, so use root-relative path
+        VITE_BACKEND_URL: ""
+    container_name: tbaps_frontend
+    restart: unless-stopped
+    ports:
+      - "8888:80"     # Use 8888 on host; 80 and 8080 are taken by existing services
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
 
 volumes:
   postgres_data:
   redis_data:
+  storage_data:
+  exports_data:

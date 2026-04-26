@@ -119,3 +119,17 @@ try:
     api_router.include_router(kbt_download_router, tags=["kbt-download"])
 except Exception as e:
     logger.warning(f"kbt_download router skipped: {e}")
+
+# ── Employee Portal: status, KBT heartbeat, portal-token sync ─────────────────
+try:
+    from app.api.v1.employee_portal import router as employee_portal_router
+    api_router.include_router(employee_portal_router, tags=["employee-portal"])
+except Exception as e:
+    logger.warning(f"employee_portal router skipped: {e}")
+
+# ── One-Command Install Scripts (bash + PowerShell) ───────────────────────────
+try:
+    from app.api.v1.install_scripts import router as install_scripts_router
+    api_router.include_router(install_scripts_router, tags=["install"])
+except Exception as e:
+    logger.warning(f"install_scripts router skipped: {e}")

@@ -1,0 +1,48 @@
+# ==============================================================================
+# TBAPS — Dashboard Dockerfile (multi-stage)
+# Stage 1: Build React app with Node 20
+# Stage 2: Serve dist/ via Nginx alpine
+# ==============================================================================
+
+# ── Stage 1: Build ────────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /build
+
+# Install dependencies (copy lock files first for better layer caching)
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci --prefer-offline
+
+# Copy source and build
+COPY frontend/ ./
+
+# Inject production backend URL at build time (can be overridden via --build-arg)
+ARG VITE_BACKEND_URL=http://localhost:8000
+ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
+
+RUN npm run build
+
+# ── Stage 2: Serve ────────────────────────────────────────────────────────────
+FROM nginx:1.25-alpine AS runner
+
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy our custom nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy built React app from builder stage
+COPY --from=builder /build/dist /usr/share/nginx/html
+
+# Create nginx temp dirs that are writable by non-root nginx
+RUN mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp \
+             /tmp/uwsgi_temp /tmp/scgi_temp && \
+    chown -R nginx:nginx /tmp/client_temp /tmp/proxy_temp_path \
+             /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget -qO- http://localhost:80/ | grep -q "html" || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

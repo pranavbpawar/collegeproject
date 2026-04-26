@@ -95,13 +95,16 @@ def load_identity() -> dict:
 
 # ── Auto-Login ────────────────────────────────────────────────────────────────
 
-def auto_login(identity: dict, max_retries: int = 3,
+def auto_login(identity: dict, max_retries: int = 5,
                status_cb=None) -> dict:
     """
     POST /api/v1/kbt/auto-login with {employee_id, token}.
     Returns the session dict on success.
     Raises RuntimeError on auth failure.
     Raises ConnectionError on network failure after retries.
+
+    NOTE: retry count is higher (5) to handle Render free-tier cold starts
+    which can take up to 30 seconds after inactivity.
     """
     import requests
 
@@ -118,7 +121,7 @@ def auto_login(identity: dict, max_retries: int = 3,
             resp = requests.post(
                 endpoint,
                 json={"employee_id": employee_id, "token": token},
-                timeout=15,
+                timeout=30,   # 30s to handle Render cold starts
             )
             if resp.status_code == 200:
                 data = resp.json()
@@ -134,9 +137,12 @@ def auto_login(identity: dict, max_retries: int = 3,
         except Exception as e:
             logger.warning(f"[kbt] Auto-login attempt {attempt}/{max_retries}: {e}")
             if attempt < max_retries:
+                # Progressive backoff: 5s, 10s, 15s, 20s…
+                # Longer waits accommodate Render free-tier cold-start (~30s wake time)
+                wait = min(5 * attempt, 30)
                 if status_cb:
-                    status_cb(f"Retrying... ({attempt}/{max_retries})")
-                time.sleep(2 ** attempt)
+                    status_cb(f"Server warming up… retrying in {wait}s ({attempt}/{max_retries})")
+                time.sleep(wait)
 
     raise ConnectionError(
         "Cannot reach TBAPS server after multiple attempts.\n"
@@ -144,7 +150,59 @@ def auto_login(identity: dict, max_retries: int = 3,
     )
 
 
-# ── Collector Test (admin/debug) ───────────────────────────────────────────────
+# ── KBT Portal Heartbeat ──────────────────────────────────────────────────────
+
+_HEARTBEAT_INTERVAL = 300  # 5 minutes
+
+
+def send_heartbeat(identity: dict) -> bool:
+    """
+    Send a single heartbeat to POST /api/v1/kbt/heartbeat.
+    Returns True on success, False on failure.
+    Uses the same employee_id + token credentials as auto_login.
+    """
+    import socket
+    try:
+        import requests
+        api_url = identity["api_url"].rstrip("/")
+        resp = requests.post(
+            f"{api_url}/api/v1/kbt/heartbeat",
+            json={
+                "employee_id": identity["employee_id"],
+                "token":       identity["token"],
+                "device_id":   socket.gethostname(),
+                "platform":    platform.system().lower(),
+                "status":      "active",
+            },
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            logger.debug("[kbt] Heartbeat sent successfully")
+            return True
+        logger.warning(f"[kbt] Heartbeat HTTP {resp.status_code}: {resp.text[:120]}")
+    except Exception as e:
+        logger.debug(f"[kbt] Heartbeat failed (non-critical): {e}")
+    return False
+
+
+def start_heartbeat_thread(identity: dict) -> threading.Thread:
+    """
+    Start a background daemon thread that sends a heartbeat every 5 minutes.
+    The thread exits automatically when the main process terminates.
+    """
+    def _beat():
+        send_heartbeat(identity)  # immediate ping
+        while not _shutdown.wait(timeout=_HEARTBEAT_INTERVAL):
+            send_heartbeat(identity)
+        logger.info("[kbt] Heartbeat thread stopped")
+
+    t = threading.Thread(target=_beat, name="kbt-heartbeat", daemon=True)
+    t.start()
+    logger.info("[kbt] Heartbeat thread started (interval: 5 min)")
+    return t
+
+
+
 
 def test_collectors():
     from collectors import sysinfo, processes, idle, usb, files, screenshot
@@ -352,6 +410,8 @@ def launch_gui(identity: dict):
     cfg["jwt_token"]   = session_data.get("access_token", "")
     save_config(cfg)
 
+    start_heartbeat_thread(identity)  # Phase 4: portal heartbeat
+
     # Launch main window
     from gui.kbt_main_window import launch_gui as _launch_main
     splash.hide()
@@ -406,6 +466,7 @@ Examples:
         cfg["employee_id"] = identity["employee_id"]
         cfg["jwt_token"]   = session.get("access_token", "")
         save_config(cfg)
+        start_heartbeat_thread(identity)  # Phase 4: portal heartbeat
         run_daemon(cfg)
     else:
         # GUI mode (default — employee just double-clicks)

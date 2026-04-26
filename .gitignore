@@ -77,3 +77,28 @@ certs/
 
 # ── Exports ───────────────────────────────────────────────────────────────────
 backend/exports/
+
+# ── Environment variants ───────────────────────────────────────────────────────
+.env.*
+!.env.example
+backend/.env.*
+!backend/.env.example
+frontend/.env.local
+frontend/.env.production
+
+# ── ExecMonitor ───────────────────────────────────────────────────────────────
+execmonitor/.venv/
+execmonitor/build/
+execmonitor/dist/
+
+# ── Large / vendored binaries ──────────────────────────────────────────────────
+cloudflared.deb
+cloudflared
+*.AppImage
+*.tar.gz
+
+# ── Agent build outputs ────────────────────────────────────────────────────────
+agent/build/
+agent/dist/
+agent/.pytest_cache/
+

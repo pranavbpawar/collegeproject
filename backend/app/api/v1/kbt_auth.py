@@ -29,7 +29,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.api.v1.employee_auth import _make_employee_token
-from app.api.v1.rbac_auth import require_role
+from app.core.rbac import require_role
 
 logger = logging.getLogger(__name__)
 

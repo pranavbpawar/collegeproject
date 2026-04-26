@@ -124,23 +124,27 @@ async def _write_audit(
     action: str = "CREATE",
 ):
     try:
+        detail_msg = json.dumps({
+            "created_by":               created_by_id,
+            "action":                   "employee_onboarding_kbt_sent",
+            "kbt_generated":            kbt_generated,
+            "email_sent":               email_sent,
+            "activation_code_generated": activation_code_generated,
+            "error":                    error,
+            "timestamp":                datetime.now(timezone.utc).isoformat(),
+        })
         await db.execute(
             text("""
-                INSERT INTO audit_logs (action, resource_type, resource_id, changes)
-                VALUES (:action, 'kbt_onboarding', :emp_id, CAST(:changes AS JSONB))
+                INSERT INTO onboarding_audit_logs
+                    (employee_id, action, actor_id, actor_role, detail)
+                VALUES
+                    (:emp_id, :action, :actor_id, 'system', :detail)
             """),
             {
-                "action": action,
-                "emp_id": employee_id,
-                "changes": json.dumps({
-                    "created_by":               created_by_id,
-                    "action":                   "employee_onboarding_kbt_sent",
-                    "kbt_generated":            kbt_generated,
-                    "email_sent":               email_sent,
-                    "activation_code_generated": activation_code_generated,
-                    "error":                    error,
-                    "timestamp":                datetime.now(timezone.utc).isoformat(),
-                }),
+                "emp_id":   employee_id,
+                "action":   action,
+                "actor_id": created_by_id,
+                "detail":   detail_msg,
             },
         )
         await db.commit()
@@ -244,12 +248,20 @@ async def run_kbt_onboarding(
 
     # ── Step 3: Send onboarding email (with activation code) ──────────────────
     try:
+        server_url  = settings.SERVER_URL.rstrip("/")
+        frontend_url = settings.FRONTEND_URL.rstrip("/")
+        install_url_linux   = f"{server_url}/api/v1/install/install.sh?employee_id={employee_id}"
+        install_url_windows = f"{server_url}/api/v1/install/install.ps1?employee_id={employee_id}"
+        portal_url          = f"{frontend_url}/employee"
         await send_kbt_onboarding_email(
             to_email=employee_email,
             to_name=employee_name,
             employee_id=employee_id,
             download_url=download_url,
             activation_code=activation_code,
+            install_url_linux=install_url_linux,
+            install_url_windows=install_url_windows,
+            portal_url=portal_url,
         )
         result["email_sent"] = True
         logger.info(f"[kbt-onboarding] Email sent to: {employee_email}")
