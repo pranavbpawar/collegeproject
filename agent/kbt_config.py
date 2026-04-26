@@ -9,6 +9,9 @@ import os
 import platform
 from pathlib import Path
 
+# ── Production default (used when no env var or config.json is present) ────────
+DEFAULT_SERVER_URL = "https://tbaps-backend.onrender.com"
+
 # ── Paths ──────────────────────────────────────────────────────────────────────
 CONFIG_DIR  = Path.home() / ".kbt"
 CONFIG_FILE = CONFIG_DIR / "config.json"
@@ -71,10 +74,15 @@ def _apply_env_overrides(cfg: dict) -> dict:
     """
     Environment variable overrides.
     KBT_SERVER_URL takes precedence, then NEF_SERVER_URL (backwards-compat),
-    then the value in config.json.
+    then the value in config.json, then DEFAULT_SERVER_URL (production).
     """
+    env_server = (
+        os.environ.get("KBT_SERVER_URL")
+        or os.environ.get("NEF_SERVER_URL")
+        or ""
+    )
     overrides = {
-        "server_url":          os.environ.get("KBT_SERVER_URL") or os.environ.get("NEF_SERVER_URL", ""),
+        "server_url":          env_server or cfg.get("server_url") or DEFAULT_SERVER_URL,
         "agent_id":            os.environ.get("KBT_AGENT_ID",            ""),
         "api_key":             os.environ.get("KBT_API_KEY",             ""),
         "upload_interval":     os.environ.get("KBT_UPLOAD_INTERVAL",     ""),
@@ -84,11 +92,15 @@ def _apply_env_overrides(cfg: dict) -> dict:
     numeric_fields = {"upload_interval", "heartbeat_interval", "screenshot_interval"}
     for key, value in overrides.items():
         if value:
-            if key in numeric_fields and value.isdigit():
+            if key in numeric_fields and str(value).isdigit():
                 cfg[key] = int(value)
             else:
                 cfg[key] = value
+    # Always ensure server_url is populated
+    if not cfg.get("server_url"):
+        cfg["server_url"] = DEFAULT_SERVER_URL
     return cfg
+
 
 
 def load_config() -> dict:

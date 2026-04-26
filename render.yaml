@@ -7,42 +7,100 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
+      # ── Application ──────────────────────────────────────────────────────
+      - key: APP_NAME
+        value: TBAPS
       - key: APP_ENV
         value: production
       - key: DEBUG
         value: "false"
+
+      # ── Database (Supabase) ───────────────────────────────────────────────
+      # Set in Render dashboard: Transaction Pooler URL from Supabase
+      # Format: postgresql://postgres.<ref>:<pw>@aws-0-<region>.pooler.supabase.com:6543/postgres?sslmode=require
       - key: DATABASE_URL
-        sync: false   # Set manually in Render dashboard (Neon connection string)
-      - key: JWT_SECRET_KEY
-        generateValue: true
-      - key: SECRET_KEY
-        generateValue: true
-      - key: ENCRYPTION_KEY
-        sync: false   # Set manually — must be exactly 32 chars
+        sync: false
+      - key: DATABASE_POOL_SIZE
+        value: "5"
+      - key: DATABASE_MAX_OVERFLOW
+        value: "10"
+
+      # ── Redis (optional — leave blank to run without Redis) ───────────────
+      # Set in Render dashboard if using Upstash or Render Redis
       - key: REDIS_URL
-        sync: false   # Set if using Render Redis or Upstash
+        sync: false
       - key: REDIS_OPTIONAL
         value: "true"
+
+      # ── JWT ───────────────────────────────────────────────────────────────
+      # Generate new value: python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_ISSUER
+        value: tbaps
+      - key: JWT_AUDIENCE
+        value: tbaps-api
+      - key: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      - key: JWT_REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+
+      # ── General secret key ────────────────────────────────────────────────
+      # Generate: python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+      - key: SECRET_KEY
+        sync: false
+
+      # ── Encryption key (must be exactly 32 hex chars) ─────────────────────
+      # Generate: python3 -c "import secrets; print(secrets.token_hex(16))"
+      - key: ENCRYPTION_KEY
+        sync: false
+
+      # ── CORS & URLs ───────────────────────────────────────────────────────
+      # CORS_ORIGINS: comma-separated list of allowed frontend origins
+      # e.g. https://tbaps.vercel.app,https://tbaps-pragyantri.vercel.app
+      - key: CORS_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false   # Your Vercel app URL, e.g. https://tbaps.vercel.app
+      - key: SERVER_URL
+        value: https://tbaps-backend.onrender.com
+
+      # ── Email / SMTP ──────────────────────────────────────────────────────
+      - key: EMAIL_PROVIDER
+        value: smtp
+      - key: EMAIL_FROM_ADDRESS
+        sync: false   # e.g. kbtremote.employee@gmail.com
+      - key: EMAIL_FROM_NAME
+        value: TBAPS Admin
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false   # Gmail address
+      - key: SMTP_PASSWORD
+        sync: false   # Gmail App Password (16-char)
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: AGENT_SEND_RATE_LIMIT
+        value: 10/hour
+
+      # ── Logging ───────────────────────────────────────────────────────────
       - key: LOG_LEVEL
         value: INFO
       - key: LOG_FORMAT
         value: json
-      - key: CORS_ORIGINS
-        sync: false   # Set to your Vercel frontend URL(s)
-      - key: FRONTEND_URL
-        sync: false   # Your Vercel app URL
-      - key: SERVER_URL
-        sync: false   # This Render service URL (for agent package generator)
+
+      # ── Monitoring ────────────────────────────────────────────────────────
       - key: PROMETHEUS_ENABLED
         value: "false"
-    plan: free
+      - key: SENTRY_DSN
+        value: ""
 
-  # Optional: Celery worker (comment out if not using background tasks)
-  # - type: worker
-  #   name: tbaps-worker
-  #   runtime: python
-  #   rootDir: backend
-  #   buildCommand: pip install -r requirements.txt
-  #   startCommand: celery -A app.core.celery_app worker --loglevel=info
-  #   envVars:
-  #     - fromGroup: tbaps-env
+      # ── Rate limiting ─────────────────────────────────────────────────────
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "60"
+
+    plan: free

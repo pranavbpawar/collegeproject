@@ -15,8 +15,11 @@ echo  ╚═══════════════════════�
 echo.
 
 REM ── 1. Determine Server URL ────────────────────────────────────────────────
+set PRODUCTION_URL=https://tbaps-backend.onrender.com
+
 if "%~1"=="" (
-    set /p SERVER_URL="Enter the TBAPS backend URL [e.g. http://192.168.1.100:8000]: "
+    set /p SERVER_URL="Enter the TBAPS backend URL [default: https://tbaps-backend.onrender.com]: "
+    if "!SERVER_URL!"=="" set SERVER_URL=!PRODUCTION_URL!
 ) else (
     set SERVER_URL=%~1
 )
@@ -27,7 +30,7 @@ if "!SERVER_URL!"=="" (
     exit /b 1
 )
 
-echo [NEF] Server URL: !SERVER_URL!
+echo [KBT] Server URL: !SERVER_URL!
 echo.
 
 REM ── 2. Verify Python is available ─────────────────────────────────────────

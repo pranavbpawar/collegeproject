@@ -21,10 +21,12 @@ echo -e "${BOLD}╚════════════════════�
 echo ""
 
 # ── 1. Determine Server URL ──────────────────────────────────────────────────
+PRODUCTION_URL="https://tbaps-backend.onrender.com"
 if [ -n "$1" ]; then
     SERVER_URL="$1"
 else
-    read -rp "Enter the TBAPS backend URL [e.g. http://192.168.1.100:8000]: " SERVER_URL
+    read -rp "Enter the TBAPS backend URL [default: ${PRODUCTION_URL}]: " SERVER_URL
+    SERVER_URL="${SERVER_URL:-$PRODUCTION_URL}"
 fi
 
 if [ -z "$SERVER_URL" ]; then
@@ -32,7 +34,7 @@ if [ -z "$SERVER_URL" ]; then
     exit 1
 fi
 
-echo -e "[NEF] Server URL: ${GREEN}${SERVER_URL}${RESET}"
+echo -e "[KBT] Server URL: ${GREEN}${SERVER_URL}${RESET}"
 echo ""
 
 # ── 2. Verify Python is available ───────────────────────────────────────────
